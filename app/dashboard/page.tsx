@@ -53,8 +53,9 @@ export default function Dashboard() {
   const [filterLang, setFilterLang] = useState("");
   const [minScore, setMinScore] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  useEffect(() => {
+  const refresh = () => {
     Promise.all([
       fetch("/api/leads").then(r => r.json()),
       fetch("/api/health").then(r => r.json()),
@@ -62,7 +63,14 @@ export default function Dashboard() {
       setLeads(l);
       setHealth(h);
       setLoading(false);
+      setLastUpdated(new Date());
     });
+  };
+
+  useEffect(() => {
+    refresh();
+    const interval = setInterval(refresh, 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   const today = new Date().toDateString();
@@ -85,20 +93,30 @@ export default function Dashboard() {
           <h1 className="text-xl font-bold text-slate-900">Pipeline Immobilier</h1>
           <p className="text-sm text-slate-500">Leads Immoweb & Immovlan</p>
         </div>
-        {/* Statut pooler */}
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border ${
-          health === null ? "bg-slate-100 text-slate-500 border-slate-200"
-          : health.db === "ok" ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-          : "bg-red-50 text-red-700 border-red-200"
-        }`}>
-          <span className={`w-2 h-2 rounded-full ${
-            health === null ? "bg-slate-400"
-            : health.db === "ok" ? "bg-emerald-500 animate-pulse"
-            : "bg-red-500"
-          }`} />
-          {health === null ? "Vérification..."
-            : health.db === "ok" ? `Pooler actif · ${health.latency_ms}ms`
-            : "Pooler hors ligne"}
+        <div className="flex items-center gap-3">
+          {lastUpdated && (
+            <span className="text-xs text-slate-400">
+              Mis à jour à {lastUpdated.toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
+          )}
+          <button onClick={refresh} className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-100 transition-colors">
+            ↻ Actualiser
+          </button>
+          {/* Statut pooler */}
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border ${
+            health === null ? "bg-slate-100 text-slate-500 border-slate-200"
+            : health.db === "ok" ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+            : "bg-red-50 text-red-700 border-red-200"
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${
+              health === null ? "bg-slate-400"
+              : health.db === "ok" ? "bg-emerald-500 animate-pulse"
+              : "bg-red-500"
+            }`} />
+            {health === null ? "Vérification..."
+              : health.db === "ok" ? `Pooler actif · ${health.latency_ms}ms`
+              : "Pooler hors ligne"}
+          </div>
         </div>
       </div>
 
