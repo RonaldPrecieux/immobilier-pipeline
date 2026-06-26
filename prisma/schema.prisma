@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Lead {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  prospectNom      String?  @map("prospect_nom")
+  prospectEmail    String?  @map("prospect_email")
+  prospectTel      String?  @map("prospect_tel")
+  bienReference    String?  @map("bien_reference")
+  bienAdresse      String?  @map("bien_adresse")
+  typeDemande      String?  @map("type_demande")
+  langue           String?
+  messageProspect  String?  @map("message_prospect")
+  scoreConfiance   Float    @default(0) @map("score_confiance")
+  draftReponse     String?  @map("draft_reponse")
+  rawEmail         String   @map("raw_email")
+
+  @@unique([prospectEmail, bienReference, createdAt], name: "unique_lead_per_day")
+  @@map("leads")
+}
